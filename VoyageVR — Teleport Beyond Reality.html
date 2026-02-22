@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VoyageVR — Teleport Beyond Reality</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+:root{
+  --black:#050508;--surface:#0d0d12;--surface2:#13131a;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --text:#f0f0f5;--muted:rgba(240,240,245,0.5);
+  --accent:#7b5ea7;--accent2:#c084fc;
+  --lime:#a3e635;--red:#ff3c6e;--cyan:#22d3ee;--gold:#fbbf24;
+  --r:16px;--r2:24px;--r3:40px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--black);color:var(--text);overflow-x:hidden;cursor:none}
+
+/* CURSOR */
+#cur{position:fixed;width:12px;height:12px;background:var(--lime);border-radius:50%;pointer-events:none;z-index:99999;transform:translate(-50%,-50%);mix-blend-mode:exclusion;transition:width .2s,height .2s,background .2s}
+#cur2{position:fixed;width:40px;height:40px;border:1.5px solid rgba(163,230,53,.4);border-radius:50%;pointer-events:none;z-index:99998;transform:translate(-50%,-50%);transition:width .35s cubic-bezier(.25,.46,.45,.94),height .35s cubic-bezier(.25,.46,.45,.94)}
+.cur-big #cur{width:20px;height:20px;background:var(--accent2)}
+.cur-big #cur2{width:60px;height:60px;border-color:rgba(192,132,252,.5)}
+
+/* LOADER */
+#loader{position:fixed;inset:0;background:var(--black);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;transition:opacity .9s ease,visibility .9s}
+#loader.gone{opacity:0;visibility:hidden}
+.l-logo{font-family:'Bebas Neue',sans-serif;font-size:72px;letter-spacing:8px;background:linear-gradient(135deg,var(--lime),var(--cyan),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-size:200% 200%;animation:shimmer 2s infinite}
+.l-bar-wrap{width:280px;height:3px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden}
+.l-bar{height:100%;width:0;background:linear-gradient(90deg,var(--lime),var(--cyan));border-radius:2px;transition:width .35s ease}
+.l-txt{font-family:'Syne',sans-serif;font-size:12px;letter-spacing:3px;color:var(--muted);text-transform:uppercase}
+@keyframes shimmer{0%,100%{background-position:0 50%}50%{background-position:100% 50%}}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;padding:22px 64px;display:flex;align-items:center;justify-content:space-between;transition:all .4s ease}
+nav.stuck{background:rgba(5,5,8,.94);backdrop-filter:blur(30px);border-bottom:1px solid var(--border);padding:14px 64px}
+.nav-logo{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:4px;text-decoration:none;color:inherit;display:flex;align-items:center;gap:2px}
+.nav-logo span{color:var(--lime)}
+.nav-links{display:flex;gap:40px;list-style:none}
+.nav-links a{text-decoration:none;color:var(--muted);font-size:14px;font-weight:500;letter-spacing:.5px;transition:color .25s;position:relative;padding-bottom:4px}
+.nav-links a::after{content:'';position:absolute;bottom:0;left:0;width:0;height:1px;background:var(--lime);transition:width .3s}
+.nav-links a:hover{color:var(--text)}
+.nav-links a:hover::after{width:100%}
+.nav-cta{background:var(--lime);color:#050508;border:none;border-radius:100px;padding:12px 28px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:.3px;transition:transform .2s,box-shadow .2s}
+.nav-cta:hover{transform:translateY(-2px);box-shadow:0 12px 36px rgba(163,230,53,.35)}
+
+/* HERO */
+.hero{min-height:100vh;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden;padding:130px 40px 80px}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(123,94,167,.28) 0%,transparent 60%),radial-gradient(ellipse 50% 40% at 15% 80%,rgba(163,230,53,.1) 0%,transparent 50%),radial-gradient(ellipse 40% 50% at 85% 75%,rgba(34,211,238,.1) 0%,transparent 50%),var(--black);animation:bgPulse 9s ease-in-out infinite}
+@keyframes bgPulse{0%,100%{filter:hue-rotate(0deg)}50%{filter:hue-rotate(18deg)}}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:64px 64px;mask-image:radial-gradient(ellipse at center,black 25%,transparent 75%)}
+.hero-badge{display:inline-flex;align-items:center;gap:10px;border:1px solid rgba(163,230,53,.25);border-radius:100px;padding:8px 22px;font-size:13px;font-weight:500;color:var(--lime);background:rgba(163,230,53,.06);margin-bottom:36px;animation:fadeUp .8s ease both}
+.hero-badge em{width:7px;height:7px;background:var(--lime);border-radius:50%;animation:blink 1.6s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+.hero-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(80px,15vw,190px);line-height:.86;margin-bottom:28px;animation:fadeUp .8s .15s ease both;letter-spacing:2px}
+.t1{background:linear-gradient(135deg,var(--text),rgba(240,240,245,.45));-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:block}
+.t2{background:linear-gradient(135deg,var(--lime),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:block}
+.t3{background:linear-gradient(135deg,var(--accent2),var(--red));-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:block}
+.hero-sub{max-width:540px;font-size:18px;line-height:1.7;color:var(--muted);margin:0 auto 48px;animation:fadeUp .8s .3s ease both}
+.hero-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;animation:fadeUp .8s .45s ease both}
+.btn-glow{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:100px;padding:16px 38px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:white;cursor:pointer;transition:transform .25s,box-shadow .25s;position:relative;overflow:hidden}
+.btn-glow::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent,rgba(255,255,255,.15),transparent);transform:translateX(-100%);transition:transform .5s}
+.btn-glow:hover{transform:translateY(-3px);box-shadow:0 16px 50px rgba(192,132,252,.45)}
+.btn-glow:hover::before{transform:translateX(100%)}
+.btn-ol{background:transparent;border:1px solid var(--border2);border-radius:100px;padding:16px 38px;font-family:'Syne',sans-serif;font-size:15px;font-weight:600;color:var(--text);cursor:pointer;transition:all .25s}
+.btn-ol:hover{border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.04)}
+.hero-stats{display:flex;border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;background:rgba(13,13,18,.75);backdrop-filter:blur(24px);margin-top:80px;animation:fadeUp .8s .6s ease both}
+.stat{padding:28px 44px;text-align:center;border-right:1px solid var(--border);transition:background .3s}
+.stat:last-child{border-right:none}
+.stat:hover{background:rgba(255,255,255,.03)}
+.stat-n{font-family:'Bebas Neue',sans-serif;font-size:46px;letter-spacing:2px;background:linear-gradient(135deg,var(--lime),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat-l{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:4px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+
+/* SECTIONS */
+.section{padding:120px 64px}
+.section-tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--lime);background:rgba(163,230,53,.08);border:1px solid rgba(163,230,53,.2);border-radius:100px;padding:6px 18px;margin-bottom:18px}
+.section-title{font-family:'Syne',sans-serif;font-size:clamp(34px,5vw,62px);font-weight:800;line-height:1.08;background:linear-gradient(135deg,var(--text) 40%,var(--muted));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.section-sub{font-size:16px;color:var(--muted);line-height:1.7;max-width:480px;margin-top:10px}
+
+/* DESTINATIONS */
+.dest-sec{background:var(--surface)}
+.dest-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:60px;flex-wrap:wrap;gap:20px}
+.dest-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+.card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;position:relative;cursor:pointer;transition:transform .4s cubic-bezier(.25,.46,.45,.94),border-color .3s,box-shadow .4s}
+.card:hover{transform:translateY(-8px);border-color:var(--border2);box-shadow:0 30px 80px rgba(0,0,0,.45)}
+.c1{grid-column:span 8}.c2{grid-column:span 4}.c3{grid-column:span 4}.c4{grid-column:span 8}
+.c-img{width:100%;height:280px;object-fit:cover;display:block;transition:transform .6s cubic-bezier(.25,.46,.45,.94)}
+.c2 .c-img,.c3 .c-img{height:190px}
+.card:hover .c-img{transform:scale(1.07)}
+.c-badge{position:absolute;top:18px;left:18px;background:rgba(5,5,8,.82);backdrop-filter:blur(10px);border:1px solid var(--border2);border-radius:100px;padding:5px 14px;font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--lime)}
+.c-body{padding:26px}
+.c-loc{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.c-title{font-family:'Syne',sans-serif;font-size:21px;font-weight:800;margin-bottom:8px}
+.c-desc{font-size:13px;color:var(--muted);line-height:1.65}
+.c-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}
+.chip{font-size:11px;font-weight:600;letter-spacing:.3px;padding:4px 12px;border-radius:100px;border:1px solid var(--border2);color:var(--muted);transition:all .2s}
+.chip:hover{color:var(--lime);border-color:rgba(163,230,53,.3);background:rgba(163,230,53,.06)}
+.c-foot{padding:0 26px 26px;display:flex;align-items:center;justify-content:space-between}
+.c-price{font-family:'Syne',sans-serif;font-size:12px;color:var(--muted)}
+.c-price strong{font-size:19px;color:var(--text);margin-right:3px}
+.c-cta{background:transparent;border:1px solid var(--border2);border-radius:100px;padding:9px 22px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text);cursor:pointer;transition:all .2s}
+.c-cta:hover{background:var(--lime);color:#050508;border-color:var(--lime)}
+
+/* TECH */
+.tech-sec{background:var(--black);position:relative;overflow:hidden}
+.tech-sec::before{content:'';position:absolute;width:700px;height:700px;background:radial-gradient(circle,rgba(123,94,167,.14) 0%,transparent 70%);top:-180px;right:-180px;border-radius:50%;animation:float 11s ease-in-out infinite;pointer-events:none}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-28px)}}
+.tech-grid{display:grid;grid-template-columns:1fr 1fr;gap:90px;align-items:center}
+.tech-feats{display:flex;flex-direction:column;gap:18px;margin-top:36px}
+.tf{display:flex;gap:18px;align-items:flex-start;padding:22px;border:1px solid var(--border);border-radius:var(--r);background:rgba(13,13,18,.5);transition:all .3s}
+.tf:hover{border-color:var(--border2);background:rgba(13,13,18,.9);transform:translateX(8px)}
+.tf-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.ip{background:rgba(123,94,167,.2)}.il{background:rgba(163,230,53,.1)}.ic{background:rgba(34,211,238,.1)}.ir{background:rgba(255,60,110,.1)}
+.tf-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:5px}
+.tf-desc{font-size:13px;color:var(--muted);line-height:1.6}
+.vr-vis{position:relative;border-radius:var(--r2);overflow:hidden;border:1px solid var(--border);background:var(--surface2);height:580px;display:flex;align-items:center;justify-content:center}
+.vr-vis canvas{position:absolute;inset:0;width:100%;height:100%}
+.vr-lbl{position:absolute;bottom:0;left:0;right:0;padding:24px;background:linear-gradient(transparent,rgba(5,5,8,.95))}
+.vr-lbl h4{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:3px}
+.vr-lbl p{font-size:13px;color:var(--muted)}
+.vr-dots{position:absolute;top:18px;left:18px;display:flex;gap:6px}
+.vr-dot{width:9px;height:9px;border-radius:50%;border:2px solid var(--border2)}
+.vr-dot.on{border-color:var(--lime);background:rgba(163,230,53,.3)}
+
+/* VIDEO */
+.vid-sec{background:var(--black)}
+.vid-wrap{position:relative;border-radius:var(--r2);overflow:hidden;aspect-ratio:16/9;border:1px solid var(--border)}
+.vid-wrap iframe{width:100%;height:100%;border:none;display:block}
+.vid-ov{position:absolute;inset:0;background:linear-gradient(135deg,rgba(123,94,167,.18),transparent);pointer-events:none}
+
+/* HIW */
+.hiw-sec{background:var(--surface)}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:60px}
+.step{padding:40px 34px;border:1px solid var(--border);border-radius:var(--r2);background:var(--black);position:relative;overflow:hidden;transition:all .35s}
+.step:hover{border-color:var(--border2);transform:translateY(-6px);box-shadow:0 24px 60px rgba(0,0,0,.3)}
+.step::before{content:attr(data-n);position:absolute;top:-10px;right:16px;font-family:'Bebas Neue',sans-serif;font-size:110px;color:rgba(255,255,255,.025);line-height:1;pointer-events:none}
+.step-icon{width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:22px}
+.step h3{font-family:'Syne',sans-serif;font-size:19px;font-weight:800;margin-bottom:10px}
+.step p{font-size:14px;color:var(--muted);line-height:1.65}
+.step-num{display:inline-block;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:8px}
+
+/* CTA STRIP */
+.cta-strip{background:linear-gradient(135deg,rgba(123,94,167,.18),rgba(163,230,53,.07));border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:90px 64px;text-align:center}
+.cta-strip h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(52px,9vw,110px);letter-spacing:4px;margin-bottom:18px;background:linear-gradient(135deg,var(--text),var(--muted));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.cta-strip p{font-size:16px;color:var(--muted);max-width:440px;margin:0 auto 36px}
+
+/* FOOTER */
+footer{background:var(--black);border-top:1px solid var(--border);padding:60px 64px 40px}
+.f-inner{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:48px;margin-bottom:50px}
+.f-brand{max-width:260px}
+.f-logo{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:4px;margin-bottom:10px}
+.f-logo span{color:var(--lime)}
+.f-desc{font-size:14px;color:var(--muted);line-height:1.65}
+.f-links h5{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+.f-links ul{list-style:none;display:flex;flex-direction:column;gap:9px}
+.f-links a{font-size:14px;color:var(--muted);text-decoration:none;transition:color .2s}
+.f-links a:hover{color:var(--text)}
+.f-bottom{border-top:1px solid var(--border);padding-top:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.f-bottom p{font-size:13px;color:var(--muted)}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(24px);z-index:5000;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .35s}
+.modal-bg.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r2);padding:48px;width:100%;max-width:580px;position:relative;transform:translateY(24px) scale(.96);transition:transform .4s cubic-bezier(.25,.46,.45,.94)}
+.modal-bg.open .modal{transform:none}
+.modal-x{position:absolute;top:18px;right:18px;background:rgba(255,255,255,.06);border:none;width:34px;height:34px;border-radius:50%;color:var(--muted);font-size:17px;cursor:pointer;transition:all .2s}
+.modal-x:hover{background:rgba(255,255,255,.12);color:var(--text)}
+.modal h2{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;margin-bottom:5px}
+.modal>p{font-size:14px;color:var(--muted);margin-bottom:28px}
+.f-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fg{display:flex;flex-direction:column;gap:7px}
+.fg.full{grid-column:span 2}
+.fg label{font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--muted);text-transform:uppercase}
+.fg input,.fg select{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;padding:12px 15px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none}
+.fg input:focus,.fg select:focus{border-color:var(--accent2);box-shadow:0 0 0 3px rgba(192,132,252,.12)}
+.fg select option{background:var(--surface2);color:var(--text)}
+.f-submit{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:100px;width:100%;padding:15px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:white;cursor:pointer;transition:transform .25s,box-shadow .25s;margin-top:6px}
+.f-submit:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(192,132,252,.38)}
+.f-submit:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+/* TOAST */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--surface2);border:1px solid var(--lime);border-radius:100px;padding:13px 28px;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;color:var(--lime);z-index:9999;transition:transform .4s cubic-bezier(.25,.46,.45,.94);white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* CHATBOT FAB */
+#chat-fab{position:fixed;bottom:30px;right:30px;z-index:4000;width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 8px 30px rgba(192,132,252,.4);transition:transform .3s,box-shadow .3s}
+#chat-fab:hover{transform:scale(1.1) translateY(-2px);box-shadow:0 16px 50px rgba(192,132,252,.55)}
+#chat-fab .fab-ring{position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(192,132,252,.3);animation:ring 2.5s ease-in-out infinite}
+@keyframes ring{0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(1.12);opacity:.2}}
+#chat-fab .fab-badge{position:absolute;top:-3px;right:-3px;width:17px;height:17px;background:var(--lime);border-radius:50%;border:2px solid var(--black);display:flex;align-items:center;justify-content:center;font-size:8px;color:#050508;font-weight:800}
+
+/* CHAT WINDOW */
+#chat-win{position:fixed;bottom:104px;right:30px;z-index:4000;width:370px;max-height:570px;background:var(--surface2);border:1px solid var(--border);border-radius:24px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 30px 90px rgba(0,0,0,.55);transform:translateY(16px) scale(.95);opacity:0;pointer-events:none;transition:all .35s cubic-bezier(.25,.46,.45,.94)}
+#chat-win.open{transform:none;opacity:1;pointer-events:all}
+.ch-head{padding:18px 22px;background:linear-gradient(135deg,rgba(123,94,167,.3),rgba(192,132,252,.12));border-bottom:1px solid var(--border);display:flex;align-items:center;gap:13px}
+.ch-av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;position:relative}
+.ch-av::after{content:'';position:absolute;bottom:0;right:0;width:10px;height:10px;background:var(--lime);border-radius:50%;border:2px solid var(--surface2)}
+.ch-meta h4{font-family:'Syne',sans-serif;font-size:14px;font-weight:800}
+.ch-meta p{font-size:11px;color:var(--muted)}
+.ch-close{margin-left:auto;background:transparent;border:none;color:var(--muted);font-size:19px;cursor:pointer;transition:color .2s;line-height:1}
+.ch-close:hover{color:var(--text)}
+.ch-msgs{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:13px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.ch-msgs::-webkit-scrollbar{width:3px}
+.ch-msgs::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.msg{display:flex;gap:9px;align-items:flex-end;animation:msgIn .3s ease}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.msg.u{flex-direction:row-reverse}
+.mb{max-width:250px;padding:11px 15px;border-radius:17px;font-size:13px;line-height:1.55}
+.msg.b .mb{background:rgba(255,255,255,.06);border:1px solid var(--border);border-bottom-left-radius:4px}
+.msg.u .mb{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;border-bottom-right-radius:4px}
+.mav{width:26px;height:26px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:13px}
+.msg.u .mav{background:rgba(255,255,255,.1)}
+.ch-quick{padding:0 14px 8px;display:flex;gap:7px;flex-wrap:wrap}
+.qb{font-size:12px;font-weight:600;padding:6px 13px;border:1px solid var(--border2);border-radius:100px;background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;white-space:nowrap}
+.qb:hover{border-color:var(--accent2);color:var(--accent2);background:rgba(192,132,252,.08)}
+.ch-inp{padding:14px;border-top:1px solid var(--border);display:flex;gap:9px;align-items:center}
+.cinput{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:100px;padding:10px 17px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .2s}
+.cinput:focus{border-color:var(--accent2)}
+.csend{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:transform .2s,box-shadow .2s;flex-shrink:0}
+.csend:hover{transform:scale(1.1);box-shadow:0 5px 18px rgba(192,132,252,.45)}
+.typing-dots{display:flex;gap:4px;align-items:center;padding:3px 0}
+.typing-dots span{width:6px;height:6px;background:var(--muted);border-radius:50%;animation:tdot 1.2s ease-in-out infinite}
+.typing-dots span:nth-child(2){animation-delay:.2s}
+.typing-dots span:nth-child(3){animation-delay:.4s}
+@keyframes tdot{0%,80%,100%{transform:scale(.8);opacity:.3}40%{transform:scale(1.2);opacity:1}}
+
+/* SCROLL REVEAL */
+.reveal{opacity:0;transform:translateY(36px);transition:opacity .7s ease,transform .7s cubic-bezier(.25,.46,.45,.94)}
+.reveal.visible{opacity:1;transform:none}
+
+/* RESPONSIVE */
+@media(max-width:960px){
+  nav{padding:16px 24px}nav.stuck{padding:12px 24px}
+  .nav-links{display:none}
+  .section{padding:80px 24px}
+  .hero{padding:110px 24px 60px}
+  .hero-stats{flex-direction:column}
+  .stat{border-right:none;border-bottom:1px solid var(--border)}
+  .stat:last-child{border-bottom:none}
+  .dest-grid{grid-template-columns:1fr}
+  .c1,.c2,.c3,.c4{grid-column:span 12}
+  .tech-grid{grid-template-columns:1fr}
+  .vr-vis{height:280px}
+  .steps{grid-template-columns:1fr}
+  .f-grid{grid-template-columns:1fr}
+  .fg.full{grid-column:span 1}
+  #chat-win{right:14px;width:calc(100vw - 28px)}
+  footer{padding:40px 24px 30px}
+  .cta-strip{padding:60px 24px}
+  .f-inner{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<div id="cur"></div>
+<div id="cur2"></div>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="l-logo">VOYAGE VR</div>
+  <div class="l-bar-wrap"><div class="l-bar" id="lbar"></div></div>
+  <div class="l-txt" id="ltxt">Initializing Reality Engine…</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✓ Booking confirmed! Check your email.</div>
+
+<!-- NAV -->
+<nav id="nav">
+  <a href="#" class="nav-logo">VOYAGE<span>VR</span></a>
+  <ul class="nav-links">
+    <li><a href="#destinations">Destinations</a></li>
+    <li><a href="#experience">Experience</a></li>
+    <li><a href="#how-it-works">Technology</a></li>
+  </ul>
+  <button class="nav-cta" onclick="openModal()">Book Experience</button>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-badge"><em></em>Next-gen VR is here</div>
+  <div class="hero-title">
+    <span class="t1">TELEPORT</span>
+    <span class="t2">BEYOND</span>
+    <span class="t3">REALITY</span>
+  </div>
+  <p class="hero-sub">Experience photorealistic virtual destinations with 8K resolution, haptic feedback, and spatial audio that engages every sense.</p>
+  <div class="hero-btns">
+    <button class="btn-glow" onclick="openModal()">Book a Voyage ↗</button>
+    <button class="btn-ol" onclick="document.getElementById('demo-video').scrollIntoView({behavior:'smooth'})">Watch Demo ▷</button>
+  </div>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-n" data-t="75">0</div><div class="stat-l">Destinations</div></div>
+    <div class="stat"><div class="stat-n" data-t="8">0</div><div class="stat-l">K per eye</div></div>
+    <div class="stat"><div class="stat-n" data-t="144">0</div><div class="stat-l">FPS</div></div>
+    <div class="stat"><div class="stat-n" data-t="2">0</div><div class="stat-l">M+ users</div></div>
+  </div>
+</section>
+
+<!-- DESTINATIONS -->
+<section class="section dest-sec" id="destinations">
+  <div class="dest-header reveal">
+    <div>
+      <div class="section-tag">Explore</div>
+      <h2 class="section-title">Virtual Destinations</h2>
+      <p class="section-sub">Each world crafted with dynamic weather, real physics, and breathtaking detail.</p>
+    </div>
+    <button class="btn-ol" onclick="openModal()">View all 75 →</button>
+  </div>
+  <div class="dest-grid">
+    <!-- Card 1 -->
+    <div class="card c1 reveal" style="transition-delay:.1s">
+      <div class="c-badge">✦ Featured</div>
+      <img class="c-img" src="https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=900&q=80" alt="Neo Tokyo">
+      <div class="c-body">
+        <div class="c-loc">📍 Cyberpunk Metropolis</div>
+        <div class="c-title">Neo Tokyo 2087</div>
+        <div class="c-desc">Navigate neon-lit streets, witness flying vehicles, and feel the pulse of a hyper-connected city that never sleeps. Rain physics and reflections are indistinguishable from reality.</div>
+        <div class="c-chips"><span class="chip">Ray Tracing</span><span class="chip">Rain Physics</span><span class="chip">Haptic Suit</span><span class="chip">3D Audio</span></div>
+      </div>
+      <div class="c-foot"><div class="c-price"><strong>$49</strong>/ session</div><button class="c-cta" onclick="openModal('neo-tokyo')">Book Tour</button></div>
+    </div>
+    <!-- Card 2 -->
+    <div class="card c2 reveal" style="transition-delay:.2s">
+      <img class="c-img" src="https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=600&q=80" alt="Paradise Isle">
+      <div class="c-body">
+        <div class="c-loc">📍 Tropical Paradise</div>
+        <div class="c-title">Paradise Isle</div>
+        <div class="c-desc">Crystal-clear waters, warm sand, and a gentle ocean breeze. Temperature simulation included.</div>
+        <div class="c-chips"><span class="chip">Ocean Physics</span><span class="chip">Scent System</span></div>
+      </div>
+      <div class="c-foot"><div class="c-price"><strong>$39</strong>/ session</div><button class="c-cta" onclick="openModal('paradise')">Book</button></div>
+    </div>
+    <!-- Card 3 -->
+    <div class="card c3 reveal" style="transition-delay:.25s">
+      <img class="c-img" src="https://images.unsplash.com/photo-1503614472-8c93d56e92ce?w=600&q=80" alt="Ancient Ruins">
+      <div class="c-body">
+        <div class="c-loc">📍 Lost Civilization</div>
+        <div class="c-title">Ancient Ruins</div>
+        <div class="c-desc">Explore mysterious temples and discover hidden chambers with realistic echo and dust.</div>
+        <div class="c-chips"><span class="chip">Echo System</span><span class="chip">Archaeology</span></div>
+      </div>
+      <div class="c-foot"><div class="c-price"><strong>$45</strong>/ session</div><button class="c-cta" onclick="openModal('ruins')">Book</button></div>
+    </div>
+    <!-- Card 4 -->
+    <div class="card c4 reveal" style="transition-delay:.3s">
+      <img class="c-img" src="https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=900&q=80" alt="Aurora Station">
+      <div class="c-body">
+        <div class="c-loc">📍 Orbital Space Colony</div>
+        <div class="c-title">Aurora Station</div>
+        <div class="c-desc">Float in zero gravity aboard a massive space station. Watch Earth rotate beneath you as auroras dance across the atmosphere in complete, awe-inspiring silence.</div>
+        <div class="c-chips"><span class="chip">Zero Gravity</span><span class="chip">Earth View</span><span class="chip">Cosmic Rays</span><span class="chip">Silence Mode</span></div>
+      </div>
+      <div class="c-foot"><div class="c-price"><strong>$65</strong>/ session</div><button class="c-cta" onclick="openModal('space')">Book Tour</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO VIDEO -->
+<section class="section vid-sec" id="demo-video">
+  <div style="max-width:880px;margin:0 auto;text-align:center" class="reveal">
+    <div class="section-tag">Preview</div>
+    <h2 class="section-title" style="margin-bottom:14px">See It In Action</h2>
+    <p class="section-sub" style="margin:0 auto 40px">Watch our immersive demo — experience 8K VR before you book.</p>
+    <div class="vid-wrap">
+      <div class="vid-ov"></div>
+      <iframe src="https://www.youtube.com/embed/tlTKTTt47WE?rel=0&modestbranding=1" title="VoyageVR Demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    </div>
+  </div>
+</section>
+
+<!-- TECH / EXPERIENCE -->
+<section class="section tech-sec" id="experience">
+  <div class="tech-grid">
+    <div class="reveal">
+      <div class="section-tag">Technology</div>
+      <h2 class="section-title">Ultra-Reality<br>Engine</h2>
+      <p class="section-sub" style="margin-bottom:0">Our proprietary rendering stack delivers experiences indistinguishable from physical presence.</p>
+      <div class="tech-feats">
+        <div class="tf"><div class="tf-icon ip">🖥️</div><div><div class="tf-title">8K Per-Eye Resolution</div><div class="tf-desc">Zero screen-door effect with real-time ray tracing and AI upscaling for photorealistic environments.</div></div></div>
+        <div class="tf"><div class="tf-icon il">🎵</div><div><div class="tf-title">Spatial Audio Engine</div><div class="tf-desc">Precise 3D positional audio that reacts to your environment — echoes, reverb, and ambient soundscapes.</div></div></div>
+        <div class="tf"><div class="tf-icon ic">✋</div><div><div class="tf-title">Full-Body Haptics</div><div class="tf-desc">248-actuator haptic suit simulates textures, temperature changes, wind, and rain synchronized to your world.</div></div></div>
+        <div class="tf"><div class="tf-icon ir">🌡️</div><div><div class="tf-title">Environmental Simulation</div><div class="tf-desc">Synchronized scent diffusers, thermal control, and wind generation make every environment believable.</div></div></div>
+      </div>
+    </div>
+    <div class="vr-vis reveal" style="transition-delay:.2s">
+      <canvas id="vrCanvas"></canvas>
+      <div class="vr-dots"><div class="vr-dot on"></div><div class="vr-dot"></div><div class="vr-dot"></div></div>
+      <div class="vr-lbl"><h4>Live 3D Preview</h4><p>Real-time particle simulation</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section hiw-sec" id="how-it-works">
+  <div style="text-align:center" class="reveal">
+    <div class="section-tag">Process</div>
+    <h2 class="section-title">How It Works</h2>
+    <p class="section-sub" style="margin:12px auto 0">Three steps between you and a reality-bending virtual adventure.</p>
+  </div>
+  <div class="steps">
+    <div class="step reveal" data-n="01" style="transition-delay:.1s">
+      <div class="step-num">Step 01</div>
+      <div class="step-icon" style="background:rgba(163,230,53,.1)">🎯</div>
+      <h3>Choose Your World</h3>
+      <p>Browse 75+ photorealistic destinations from ancient ruins to futuristic space stations. Each has unique sensory profiles and immersion levels.</p>
+    </div>
+    <div class="step reveal" data-n="02" style="transition-delay:.2s">
+      <div class="step-num">Step 02</div>
+      <div class="step-icon" style="background:rgba(192,132,252,.1)">🥽</div>
+      <h3>Suit Up</h3>
+      <p>Our technicians calibrate your haptic suit, VR headset, and sensory peripherals. Full calibration takes under 5 minutes for first-time visitors.</p>
+    </div>
+    <div class="step reveal" data-n="03" style="transition-delay:.3s">
+      <div class="step-num">Step 03</div>
+      <div class="step-icon" style="background:rgba(34,211,238,.1)">🚀</div>
+      <h3>Teleport</h3>
+      <p>The Ultra-Reality Engine transports you instantly. Explore freely, interact naturally, and create memories that feel 100% real — in complete safety.</p>
+    </div>
+  </div>
+  <!-- Tech video -->
+  <div style="max-width:760px;margin:80px auto 0" class="reveal">
+    <div class="section-tag">Behind the Tech</div>
+    <h3 style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;margin-bottom:22px">Engineering the Impossible</h3>
+    <div class="vid-wrap">
+      <div class="vid-ov"></div>
+      <iframe src="https://www.youtube.com/embed/tlTKTTt47WE?rel=0&modestbranding=1&start=30" title="VR Technology" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    </div>
+  </div>
+</section>
+
+<!-- CTA STRIP -->
+<div class="cta-strip reveal">
+  <h2>Ready to Teleport?</h2>
+  <p>Join over 2 million travelers who've experienced reality through a new lens.</p>
+  <button class="btn-glow" style="font-size:16px;padding:18px 44px" onclick="openModal()">Book Your Voyage Now ↗</button>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="f-inner">
+    <div class="f-brand">
+      <div class="f-logo">VOYAGE<span>VR</span></div>
+      <div class="f-desc">The world's most immersive virtual reality travel platform. Transcend physical boundaries and explore impossible worlds.</div>
+    </div>
+    <div class="f-links">
+      <h5>Explore</h5>
+      <ul>
+        <li><a href="#destinations">Destinations</a></li>
+        <li><a href="#experience">Technology</a></li>
+        <li><a href="#how-it-works">How It Works</a></li>
+        <li><a href="#" onclick="openModal()">Book Now</a></li>
+      </ul>
+    </div>
+    <div class="f-links">
+      <h5>Company</h5>
+      <ul>
+        <li><a href="#">About Us</a></li>
+        <li><a href="#">Careers</a></li>
+        <li><a href="#">Press</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </div>
+    <div class="f-links">
+      <h5>Legal</h5>
+      <ul>
+        <li><a href="#">Privacy Policy</a></li>
+        <li><a href="#">Terms of Service</a></li>
+        <li><a href="#">Refund Policy</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="f-bottom">
+    <p>© 2025 VoyageVR Inc. All rights reserved.</p>
+    <p>Built with ♡ for explorers everywhere</p>
+  </div>
+</footer>
+
+<!-- BOOKING MODAL -->
+<div class="modal-bg" id="modal" onclick="handleBg(event)">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal()">✕</button>
+    <h2>Book Your Voyage</h2>
+    <p>Reserve your ultra-immersive virtual reality experience.</p>
+    <form onsubmit="submitForm(event)">
+      <div class="f-grid">
+        <div class="fg"><label>First Name</label><input type="text" placeholder="Alex" required></div>
+        <div class="fg"><label>Last Name</label><input type="text" placeholder="Chen" required></div>
+        <div class="fg"><label>Email</label><input type="email" placeholder="you@example.com" required></div>
+        <div class="fg"><label>Phone</label><input type="tel" placeholder="+1 (555) 000-0000"></div>
+        <div class="fg full">
+          <label>Destination</label>
+          <select id="mdest" required>
+            <option value="">Choose a destination…</option>
+            <option value="neo-tokyo">Neo Tokyo 2087 — $49</option>
+            <option value="paradise">Paradise Isle — $39</option>
+            <option value="ruins">Ancient Ruins — $45</option>
+            <option value="space">Aurora Station — $65</option>
+          </select>
+        </div>
+        <div class="fg"><label>Date</label><input type="date" id="mdate" required></div>
+        <div class="fg">
+          <label>Time Slot</label>
+          <select required>
+            <option value="">Select time…</option>
+            <option>9:00 AM</option><option>11:00 AM</option><option>1:00 PM</option>
+            <option>3:00 PM</option><option>5:00 PM</option><option>7:00 PM</option>
+          </select>
+        </div>
+        <div class="fg full">
+          <label>Participants</label>
+          <select required>
+            <option value="">How many?</option>
+            <option>Solo (1 person)</option><option>Duo (2 people)</option>
+            <option>Group (3–4 people)</option><option>Party (5+ people)</option>
+          </select>
+        </div>
+      </div>
+      <button class="f-submit" id="fsub">Confirm Booking ↗</button>
+    </form>
+  </div>
+</div>
+
+<!-- CHATBOT FAB -->
+<button id="chat-fab" onclick="toggleChat()">
+  🤖
+  <div class="fab-ring"></div>
+  <div class="fab-badge">AI</div>
+</button>
+
+<!-- CHAT WINDOW -->
+<div id="chat-win">
+  <div class="ch-head">
+    <div class="ch-av">🌍</div>
+    <div class="ch-meta"><h4>VAIA — VoyageVR AI</h4><p>Online · Replies instantly</p></div>
+    <button class="ch-close" onclick="toggleChat()">✕</button>
+  </div>
+  <div class="ch-msgs" id="cmsgs"></div>
+  <div class="ch-quick" id="cquick">
+    <button class="qb" onclick="sq('What destinations do you offer?')">Destinations?</button>
+    <button class="qb" onclick="sq('How much does it cost?')">Pricing?</button>
+    <button class="qb" onclick="sq('How do I book a session?')">How to book?</button>
+    <button class="qb" onclick="sq('What equipment is provided?')">Equipment?</button>
+  </div>
+  <div class="ch-inp">
+    <input class="cinput" id="cinput" type="text" placeholder="Ask me anything…" onkeydown="ck(event)">
+    <button class="csend" onclick="send()">➤</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// CURSOR
+const cur=document.getElementById('cur'),cur2=document.getElementById('cur2');
+let cx=window.innerWidth/2,cy=window.innerHeight/2,cx2=cx,cy2=cy;
+document.addEventListener('mousemove',e=>{cx=e.clientX;cy=e.clientY});
+document.addEventListener('mouseover',e=>{if(e.target.matches('button,a,.card,.c-cta,.qb'))document.body.classList.add('cur-big');else document.body.classList.remove('cur-big')});
+(function lp(){
+  cx2+=(cx-cx2)*.12;cy2+=(cy-cy2)*.12;
+  cur.style.left=cx+'px';cur.style.top=cy+'px';
+  cur2.style.left=cx2+'px';cur2.style.top=cy2+'px';
+  requestAnimationFrame(lp);
+})();
+
+// LOADER
+let lp2=0;
+const lbar=document.getElementById('lbar'),ltxt=document.getElementById('ltxt'),ldr=document.getElementById('loader');
+const lsteps=[{p:20,t:"Loading 8K Textures…"},{p:45,t:"Calibrating Haptics…"},{p:70,t:"Activating Spatial Audio…"},{p:90,t:"Syncing Environment…"},{p:100,t:"Ready for Launch! ✓"}];
+let ls=0;
+function runLoader(){
+  if(ls<lsteps.length){
+    const s=lsteps[ls];
+    lbar.style.width=s.p+'%';ltxt.textContent=s.t;ls++;
+    if(ls<lsteps.length)setTimeout(runLoader,600);
+    else setTimeout(()=>{ldr.classList.add('gone');initCounters();},700);
+  }
+}
+setTimeout(runLoader,400);
+
+// NAV
+window.addEventListener('scroll',()=>document.getElementById('nav').classList.toggle('stuck',scrollY>60));
+
+// COUNTERS
+function initCounters(){
+  document.querySelectorAll('.stat-n').forEach(el=>{
+    const t=+el.dataset.t;let v=0;const inc=t/55;
+    const tm=setInterval(()=>{v=Math.min(t,v+inc);el.textContent=Math.round(v);if(v>=t)clearInterval(tm);},22);
+  });
+}
+
+// REVEAL
+const ro=new IntersectionObserver(e=>e.forEach(en=>{if(en.isIntersecting)en.target.classList.add('visible')}),{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>ro.observe(el));
+
+// MODAL
+function openModal(dest=''){
+  document.getElementById('modal').classList.add('open');
+  document.body.style.overflow='hidden';
+  if(dest)document.getElementById('mdest').value=dest;
+  document.getElementById('mdate').min=new Date().toISOString().split('T')[0];
+}
+function closeModal(){document.getElementById('modal').classList.remove('open');document.body.style.overflow='';}
+function handleBg(e){if(e.target===document.getElementById('modal'))closeModal();}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+function submitForm(e){
+  e.preventDefault();
+  const b=document.getElementById('fsub');
+  b.disabled=true;b.textContent='Confirming…';
+  setTimeout(()=>{
+    closeModal();b.disabled=false;b.textContent='Confirm Booking ↗';
+    const t=document.getElementById('toast');t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),4200);
+    e.target.reset();
+  },1500);
+}
+
+// THREE.JS CANVAS
+(function(){
+  const c=document.getElementById('vrCanvas');
+  if(!c||typeof THREE==='undefined')return;
+  const s=new THREE.Scene(),cam=new THREE.PerspectiveCamera(60,1,.1,100);
+  cam.position.z=5.5;
+  const r=new THREE.WebGLRenderer({canvas:c,alpha:true,antialias:true});
+  r.setClearColor(0,0);
+  function rsz(){const p=c.parentElement.getBoundingClientRect();r.setSize(p.width,p.height);cam.aspect=p.width/p.height;cam.updateProjectionMatrix();}
+  rsz();new ResizeObserver(rsz).observe(c.parentElement);
+  // Particles
+  const N=1500,g=new THREE.BufferGeometry();
+  const pos=new Float32Array(N*3),col=new Float32Array(N*3);
+  const pal=[[.48,.37,.65],[.75,.52,.99],[.64,.90,.21],[.13,.83,.93],[1,.24,.43],[.98,.75,.15]];
+  for(let i=0;i<N;i++){
+    pos[i*3]=(Math.random()-.5)*14;pos[i*3+1]=(Math.random()-.5)*14;pos[i*3+2]=(Math.random()-.5)*12;
+    const cl=pal[Math.floor(Math.random()*pal.length)];
+    col[i*3]=cl[0];col[i*3+1]=cl[1];col[i*3+2]=cl[2];
+  }
+  g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  g.setAttribute('color',new THREE.BufferAttribute(col,3));
+  const pts=new THREE.Points(g,new THREE.PointsMaterial({size:.055,vertexColors:true,transparent:true,opacity:.9}));
+  s.add(pts);
+  // Wire globe
+  const wg=new THREE.IcosahedronGeometry(2.4,2);
+  const wm=new THREE.MeshBasicMaterial({color:0x7b5ea7,wireframe:true,transparent:true,opacity:.12});
+  const globe=new THREE.Mesh(wg,wm);s.add(globe);
+  // Inner glow
+  const ig=new THREE.SphereGeometry(1.5,32,32);
+  const im=new THREE.MeshBasicMaterial({color:0x4c0091,transparent:true,opacity:.07});
+  s.add(new THREE.Mesh(ig,im));
+  // Ring
+  const rg=new THREE.RingGeometry(1.8,1.85,64);
+  const rm=new THREE.MeshBasicMaterial({color:0xa3e635,transparent:true,opacity:.25,side:THREE.DoubleSide});
+  const ring=new THREE.Mesh(rg,rm);ring.rotation.x=Math.PI/4;s.add(ring);
+  let t=0;
+  (function anim(){
+    t+=.005;
+    pts.rotation.y=t*.28;pts.rotation.x=t*.12;
+    globe.rotation.y=-t*.18;globe.rotation.x=t*.08;
+    ring.rotation.z=t*.3;
+    globe.scale.setScalar(1+Math.sin(t*1.4)*.035);
+    r.render(s,cam);requestAnimationFrame(anim);
+  })();
+})();
+
+// CHATBOT
+let chatOpen=false,inited=false;
+function toggleChat(){
+  chatOpen=!chatOpen;
+  document.getElementById('chat-win').classList.toggle('open',chatOpen);
+  if(chatOpen&&!inited){inited=true;setTimeout(()=>addMsg('b','👋 Hey! I\'m **VAIA**, VoyageVR\'s AI guide. Ask me about destinations, pricing, technology, or how to book your first experience!'),400);}
+}
+function addMsg(role,text){
+  const d=document.createElement('div');d.className='msg '+role;
+  const av=document.createElement('div');av.className='mav';av.textContent=role==='b'?'🌍':'👤';
+  const mb=document.createElement('div');mb.className='mb';
+  mb.textContent=text.replace(/\*\*(.*?)\*\*/g,'$1');
+  if(role==='b'){d.appendChild(av);d.appendChild(mb);}else{d.appendChild(av);d.appendChild(mb);}
+  document.getElementById('cmsgs').appendChild(d);
+  document.getElementById('cmsgs').scrollTop=9999;
+}
+function addTyping(){
+  const d=document.createElement('div');d.className='msg b';d.id='typing';
+  d.innerHTML='<div class="mav">🌍</div><div class="mb"><div class="typing-dots"><span></span><span></span><span></span></div></div>';
+  document.getElementById('cmsgs').appendChild(d);
+  document.getElementById('cmsgs').scrollTop=9999;
+}
+function rmTyping(){const t=document.getElementById('typing');if(t)t.remove();}
+async function send(){
+  const inp=document.getElementById('cinput');
+  const txt=inp.value.trim();if(!txt)return;
+  inp.value='';
+  document.getElementById('cquick').style.display='none';
+  addMsg('u',txt);addTyping();
+  const rep=await getReply(txt);
+  rmTyping();addMsg('b',rep);
+}
+function sq(t){document.getElementById('cinput').value=t;send();}
+function ck(e){if(e.key==='Enter')send();}
+
+async function getReply(msg){
+  // Try Anthropic API
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:300,
+        system:'You are VAIA, a friendly AI guide for VoyageVR — a premium virtual reality travel company. VoyageVR offers ultra-immersive VR with 8K per-eye resolution, haptic suits, spatial audio, and environmental simulation. Destinations: Neo Tokyo 2087 ($49/session), Paradise Isle ($39), Ancient Ruins ($45), Aurora Station/space ($65). Sessions are 60 minutes. Book via the "Book Experience" button on the website. Be warm, concise (2-4 sentences max), and enthusiastic. Never mention you are Claude or made by Anthropic.',
+        messages:[{role:'user',content:msg}]
+      })
+    });
+    if(res.ok){const d=await res.json();const t=d.content?.map(b=>b.text||'').join('');if(t)return t;}
+  }catch(e){}
+  // Fallback
+  const l=msg.toLowerCase();
+  if(/destination|world|place|where|visit/.test(l))return"We have 4 flagship worlds: 🌃 Neo Tokyo 2087 ($49), 🏖️ Paradise Isle ($39), 🏛️ Ancient Ruins ($45), and 🚀 Aurora Station ($65). 75 total destinations and growing — each with unique physics, haptics, and sensory effects!";
+  if(/price|cost|how much|fee|expensive/.test(l))return"Sessions range from $39–$65 per person. All include haptic suit calibration, 8K headset, spatial audio, and environmental simulation. Group discounts available for 3+ people! 🎉";
+  if(/book|reserve|schedul|appoint/.test(l))return"Super easy! Click the 'Book Experience' button in the nav bar or on any destination card. Pick your destination, date, time, and group size. We confirm within 2 hours!";
+  if(/equip|gear|suit|headset|need|require|bring/.test(l))return"We provide everything — haptic suit (248 actuators!), 8K VR headset, spatial audio headphones, and scent diffusers. Just wear comfortable clothes. Calibration takes ~5 minutes for first-timers. ✅";
+  if(/tech|how|work|resolution|fps|ray|render/.test(l))return"Our Ultra-Reality Engine renders at 8K per eye at 144fps with real-time ray tracing. The haptic suit has 248 actuators for touch simulation, plus thermal control and a spatial audio system with 256 virtual speakers.";
+  if(/safe|sick|health|dizzy|nausea/.test(l))return"VoyageVR is completely safe! We use 144fps rendering to minimize motion sickness, with adaptive comfort modes for sensitive users. We recommend a 15-min break between sessions. Most users feel great right away! 😊";
+  if(/hello|hi|hey|sup|greet/.test(l))return"Hey! 👋 I'm VAIA, your VoyageVR guide. Ask me about destinations, pricing, how the tech works, or how to book. What sounds interesting to you?";
+  if(/cancel|refund|policy/.test(l))return"We offer full refunds up to 48 hours before your session, and credits for cancellations within 24 hours. Contact our team via the website and we'll take care of you right away!";
+  return"Great question! VoyageVR pushes the limits of what's possible in virtual reality. Want to know about specific destinations, our technology, pricing, or how to book your first session? I'm here to help! 🌍✨";
+}
+</script>
+</body>
+</html>
